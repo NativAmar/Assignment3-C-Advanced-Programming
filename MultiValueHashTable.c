@@ -23,7 +23,7 @@ MultiValueHashTable createMultiValueHashTable(CopyFunction copyKey, CopyFunction
         return NULL;
     }
 
-    MultiValueHashTable multiValueTbl = (MultiValueHashTable)malloc(sizeof(MultiValueHashTable));
+    MultiValueHashTable multiValueTbl = (MultiValueHashTable)malloc(sizeof(struct MultiValueHashTable_s));
     if (multiValueTbl == NULL) {
         return NULL;
     }
@@ -63,7 +63,7 @@ status addToMultiValueHashTable(MultiValueHashTable multiValueHashTable, Element
 
     if (valuesList == NULL) {
         //first element for this key
-        valuesList = createLinkedList(multiValueHashTable->copyVal, multiValueHashTable->freeVal, multiValueHashTable->equalKey);
+        valuesList = createLinkedList(multiValueHashTable->copyVal, multiValueHashTable->freeVal, multiValueHashTable->equalKey, multiValueHashTable->printVal);
         if (valuesList == NULL) {
             return failure;
         }
@@ -109,7 +109,7 @@ status displayMultiValueHashTable(MultiValueHashTable multiValueHashTable, Eleme
         return failure;
     }
     multiValueHashTable->printKey(key);
-    displayList(valuesList, multiValueHashTable->printVal);
+    displayList(valuesList);
     return success;
 }
 

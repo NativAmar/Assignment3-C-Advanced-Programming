@@ -80,6 +80,9 @@ extern status delete_physical_characteristics(Jerry *jerry, char *characteristic
 extern void print_jerry(Jerry *jerry);
 
 
+void print_jerry_without_id(Jerry *jerry);
+
+
 //Prints the details of a given Planet.
 extern void print_plant(Planet *planet);
 

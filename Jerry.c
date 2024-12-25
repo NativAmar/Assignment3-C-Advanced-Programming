@@ -29,7 +29,7 @@ Jerry* create_jerry(char *id, int happiness_level,Origin *origin) {
     jp->characteristics = NULL;
 
     size_t id_length = strlen(id) +1;
-    jp->id = (char*)malloc(id_length * sizeof(char));
+    jp->id = (char*)malloc(id_length * sizeof(char) +1);
     if (jp->id == NULL) {
         free(jp);
         return NULL;
@@ -409,6 +409,36 @@ void print_jerry(Jerry *jerry){
         }
         printf("\n");
     }
+}
+
+
+//custom jerry print for Jerries hash table
+void print_jerry_without_id(Jerry *jerry){
+    if (jerry == NULL) {
+        printf("There is no Jerry\n");
+        return;
+    }
+    printf("Happiness level : %d \nOrigin : %s \nPlanet : %s (%.2f,%.2f,%.2f) \n",
+        jerry->happiness_level, jerry->origin->name, jerry->origin->planet->name, jerry->origin->planet->x, jerry->origin->planet->y, jerry->origin->planet->z);
+    if(jerry->characteristics_count != 0) { //check if characteristics exist
+        printf("Jerry's physical Characteristics available : \n");
+        printf("\t");
+        for (int i = 0; i < jerry->characteristics_count; i++) {
+            if (i == jerry->characteristics_count - 1) {
+                PhysicalCharacteristics *pcp = jerry->characteristics[i];
+                round_c(&(jerry->characteristics[i]->value));
+                printf("%s : %.2f ", pcp->name, jerry->characteristics[i]->value);
+
+            }
+            else {
+                PhysicalCharacteristics *pcp = jerry->characteristics[i];
+                printf("%s : %.2f , ", pcp->name, jerry->characteristics[i]->value);
+            }
+        }
+        return;
+        //printf("\n");
+    }
+    //printf("\n");
 }
 
 

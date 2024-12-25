@@ -18,6 +18,36 @@ struct hashTable_s {
 };
 
 
+status printPair(Element pair) {
+    KeyValuePair pairCopy = (KeyValuePair)pair;
+    if (pairCopy == NULL) {
+        return failure;
+    }
+    Element key = getKey(pairCopy);
+    Element value = getValue(pairCopy);
+
+    if (key!= NULL && value != NULL) {
+        displayKey(pairCopy);  // Print the key using the provided function
+        printf(" ");
+        displayValue(pairCopy);  // Print the value using the provided function
+        //printf("\n");  // End the line
+        return success;
+    }
+    return failure;
+}
+
+
+Element pairCopy(Element pair) {
+    KeyValuePair pairCopy = (KeyValuePair)pair;
+    if (pairCopy == NULL) {
+        return NULL;
+    }
+    return pairCopy;
+}
+
+
+
+
 
 hashTable createHashTable(CopyFunction copyKey, FreeFunction freeKey, PrintFunction printKey, CopyFunction copyValue, FreeFunction freeValue,
                             PrintFunction printValue, EqualFunction equalKey, TransformIntoNumberFunction transformIntoNumber, int hashNumber)
@@ -25,32 +55,32 @@ hashTable createHashTable(CopyFunction copyKey, FreeFunction freeKey, PrintFunct
     if (hashNumber < 1) {
         return NULL;
     }
-    hashTable hash_Table = (hashTable)malloc(sizeof(hashTable));
+    hashTable hash_Table = (hashTable)malloc(sizeof(struct hashTable_s));
     //allocation check
     if (hash_Table == NULL) {
         return NULL;
     }
 
-    hash_Table->lists_table = (LinkedList*)malloc(sizeof(LinkedList) * hashNumber);
+    hash_Table->lists_table = (LinkedList*)calloc(hashNumber,sizeof(LinkedList));
     //allocation check
     if (hash_Table->lists_table == NULL) {
         free(hash_Table);
         return NULL;
     }
 
-    for (int i = 0; i < hashNumber; i++) {
-        hash_Table->lists_table[i] = createLinkedList(pairCopy, (Element)destroyKeyValuePair, equalKey);
+    //for (int i = 0; i < hashNumber; i++) {
+        //hash_Table->lists_table[i] = createLinkedList(pairCopy, (Element)destroyKeyValuePair, equalKey, printPair);
         //allocate check
-        if (hash_Table->lists_table[i] == NULL) {
+        //if (hash_Table->lists_table[i] == NULL) {
             //free memory which already allocated
-            for (int j = 0; j < i; j++) {
-                destroyList(hash_Table->lists_table[j]);
-            }
-            free(hash_Table->lists_table);
-            free(hash_Table);
-            return NULL;
-        }
-    }
+           // for (int j = 0; j < i; j++) {
+             //   destroyList(hash_Table->lists_table[j]);
+           // }
+         //   free(hash_Table->lists_table);
+       //     free(hash_Table);
+     //       return NULL;
+   //     }
+ //   }
     hash_Table->copyKey = copyKey;
     hash_Table->copyValue = copyValue;
     hash_Table->freeKey = freeKey;
@@ -69,8 +99,10 @@ status destroyHashTable(hashTable hash_Table) {
         return failure;
     }
     for (int i = 0; i < hash_Table->size; i++) {
-        if (destroyList(hash_Table->lists_table[i]) == failure) {
-            return failure;
+        if (hash_Table->lists_table[i] != NULL) {
+            if (destroyList(hash_Table->lists_table[i]) == failure) {
+                return failure;
+            }
         }
     }
     free(hash_Table->lists_table);
@@ -84,11 +116,21 @@ status addToHashTable(hashTable hash_Table, Element key, Element value) {
     if (hash_Table == NULL || key == NULL || value == NULL ) {
         return failure;
     }
+
     int indexToStore = hash_Table->hashFunction(key) % hash_Table->size;
     LinkedList list = hash_Table->lists_table[indexToStore];
 
-    if (searchByKeyInList(list, key) != NULL) {
-        return failure;
+    if (list == NULL) {
+        list = createLinkedList(pairCopy, (Element)destroyKeyValuePair, hash_Table->equalKey, printPair);
+        if (list == NULL) {
+            return failure;
+        }
+        hash_Table->lists_table[indexToStore] = list;
+    }
+    else {
+        if (searchByKeyInList(list, key) != NULL) {
+            return failure;
+        }
     }
 
     KeyValuePair pair = createKeyValuePair(key, value, hash_Table->copyKey, hash_Table->freeKey, hash_Table->copyValue,
@@ -149,9 +191,11 @@ status displayHashElements(hashTable hash_Table) {
     for (int i = 0; i < hash_Table->size; i++) {
         LinkedList list = hash_Table->lists_table[i];
         if (list != NULL) {
-            displayList(list, printPair);
+            displayList(list);
         }
     }
     return success;
 };
+
+
 

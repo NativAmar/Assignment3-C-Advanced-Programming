@@ -6,10 +6,12 @@
 #include "MultiValueHashTable.h"
 #include "Jerry.h"
 #include "Defs.h"
+#include "KeyValuePair.h"
 
 
 #define MAX_LINE_LENGTH 300
 #define HASH_TABLE_SIZE 10
+#define MULTI_VALUES_HASH_TABLE_SIZE 10
 
 
 // Helper function: Parse Planet
@@ -172,7 +174,7 @@ status parse_config_file(const char *input_file, int number_of_planets, Planet *
                     return failure;
                 }
 
-            } else {
+            } else { //Jerry details line
                 current_jerry = parse_jerry(line, number_of_planets, planets);
                 if(current_jerry == NULL) {
                     printf("A memory problem has been detected in the program\n");
@@ -205,8 +207,8 @@ status print_jerry_key(Element element) {
     if (element == NULL) {
         return failure;
     }
-    Jerry *jerry = (Jerry*)element;
-    printf("Jerry , ID - %s ", jerry->id); //I should delete this part from jerry print function
+    char *id = (char*) element;
+    printf("Jerry , ID - %s ", id); //I should delete this part from jerry print function
     return success;
 }
 
@@ -227,20 +229,23 @@ status print_jerry_value(Element element) {
     if (jerry == NULL) {
         return failure;
     }
-    print_jerry(jerry);
+    print_jerry_without_id(jerry);
+    if(jerry->characteristics_count>0) {
+        printf("\n");
+    }
     return success;
 }
 
 bool equal_jerry_key(Element element, Element other) {
-    Jerry *jerry = (Jerry*)element;
-    Jerry *other_jerry = (Jerry*)other;
-    if (jerry == NULL || other_jerry == NULL) {
+    char *jerry_id = (char*)element;
+    char *other_jerry_id = (char*)other;
+    if (jerry_id == NULL || other_jerry_id == NULL) {
         return false;
     }
-    if (jerry->id != other_jerry->id) {
-        return false;
+    if (jerry_id == other_jerry_id) {
+        return true;
     }
-    return true;
+    return false;
 }
 
 int hash_jerry(Element element) {
@@ -251,12 +256,60 @@ int hash_jerry(Element element) {
     char *id = (char*)element;
     while (*id) {
         hash += (int)*id;
+        id++;//move to the next char
     }
     return hash;
 }
 
 
+//characteristics multiValuesHashTable functions
+Element copy_characteristic_key(Element element) {
+    return element;
+}
 
+status print_characteristic_key(Element element) {
+    if (element == NULL) {
+        return failure;
+    }
+    char *key = (char*)element;
+    printf("%s : \n", key);
+    return success;
+}
+
+status print_jerry_charTable(Element element) {
+    if (element == NULL) {
+        return failure;
+    }
+    Jerry *jerry = (Jerry*)element;
+    print_jerry(jerry);
+    return success;
+}
+
+bool equal_characteristic_key(Element element, Element other) {
+    char *key = (char*)element;
+    char *other_key = (char*)other;
+    if (key == NULL || other_key == NULL) {
+        return false;
+    }
+    if (*key == *other_key) {
+        return true;
+    }
+    return false;
+}
+
+
+status destroy_all(hashTable hash_table, MultiValueHashTable multi_value_hash_table, Planet **planets, int numberOfPlanets) {
+    if (hash_table == NULL || multi_value_hash_table == NULL || planets == NULL) {
+        return failure;
+    }
+    for (int i=0; i<numberOfPlanets;i++) {
+        destroy_planet(planets[i]);
+    }
+    free(planets);
+    destroyHashTable(hash_table);
+    destroyMultiValueHashTable(multi_value_hash_table);
+    return success;
+}
 
 
 int main (int argc, char *argv[]){
@@ -268,13 +321,34 @@ int main (int argc, char *argv[]){
     Planet **planets = malloc(number_of_planets * sizeof(Planet *));
     if (!planets) {
         perror("A memory problem has been detected in the program");
+        return 0;
     }
 
     hashTable Jerries = createHashTable(copy_key, free_jerry_key, print_jerry_key, copy_jerry, free_jerry, print_jerry_value,
                                         equal_jerry_key, hash_jerry, HASH_TABLE_SIZE);
 
-    //MultiValueHashTable characteristics = createMultiValueHashTable();
+    MultiValueHashTable characteristics = createMultiValueHashTable(copy_characteristic_key, copy_jerry, free_jerry_key, free_jerry, print_characteristic_key,
+                                                                    print_jerry_charTable, equal_characteristic_key, hash_jerry, MULTI_VALUES_HASH_TABLE_SIZE);
 
+    if(parse_config_file(input_file, number_of_planets, planets, Jerries, characteristics) == failure) {
+        printf("A memory problem has been detected in the program\n");
+
+        destroyHashTable(Jerries);
+        destroyMultiValueHashTable(characteristics);
+        if (planets != NULL) {
+            for (int i = 0; i < number_of_planets; i++) {
+                destroy_planet(planets[i]);
+            }
+            free(planets);
+            return 0;
+        }
+    }
+
+    displayHashElements(Jerries);
+    displayMultiValueHashTable(characteristics, "LimbsNumber");
+    if (destroy_all(Jerries, characteristics, planets, number_of_planets) == success) {
+        return 1;
+    }
 
     return 0;
 };

@@ -18,11 +18,11 @@ struct Linked_List {
         EqualFunction equal;
 };
 
-LinkedList createLinkedList(CopyFunction copyFunc, FreeFunction freeFunc, EqualFunction equalFunc ) {
+LinkedList createLinkedList(CopyFunction copyFunc, FreeFunction freeFunc, EqualFunction equalFunc, PrintFunction printFunc ) {
         if (copyFunc == NULL || freeFunc == NULL) {
                 return NULL;
         }
-        LinkedList list = (LinkedList)malloc(sizeof(LinkedList));
+        LinkedList list = (LinkedList)malloc(sizeof(struct Linked_List));
         //allocation check
         if (list == NULL) {
                 return NULL;
@@ -32,6 +32,7 @@ LinkedList createLinkedList(CopyFunction copyFunc, FreeFunction freeFunc, EqualF
         list->copy = copyFunc;
         list->free = freeFunc;
         list->equal = equalFunc;
+        list->print = printFunc;
         return list;
 };
 
@@ -109,13 +110,13 @@ status deleteNode(LinkedList list, Element element) {
 };
 
 
-void displayList(LinkedList list, PrintFunction printFunc) {
-        if (list == NULL || printFunc == NULL) {
+void displayList(LinkedList list) {
+        if (list == NULL) {
                 return;
         }
         node* curr = list->head;
         while (curr != NULL) {
-                printFunc(curr->data);
+                list->print(curr->data);
                 curr = curr->next;
         }
 };
