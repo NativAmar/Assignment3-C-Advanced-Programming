@@ -5,7 +5,7 @@
 #include <string.h>
 
 typedef enum e_bool { false, true } bool;
-typedef enum e_status { success, failure } status;
+typedef enum e_status { success, failure, memoryFailure, argumentFailure } status;
 
 typedef void * Element;
 

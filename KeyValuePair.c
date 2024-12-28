@@ -20,7 +20,7 @@ KeyValuePair createKeyValuePair(Element key,Element value,CopyFunction copy_key_
                                 FreeFunction free_value_function, PrintFunction print_key_function,PrintFunction print_value_function, EqualFunction equal_key_function)
 {
 
-    if (key == NULL || value == NULL || copy_key_function == NULL || free_key_function == NULL || copy_key_function == NULL || free_value_function == NULL ||
+    if (key == NULL || value == NULL || copy_key_function == NULL || free_key_function == NULL || copy_value_function == NULL || free_value_function == NULL ||
         print_key_function == NULL || print_value_function == NULL|| equal_key_function == NULL)
     {
         return NULL;
@@ -32,8 +32,8 @@ KeyValuePair createKeyValuePair(Element key,Element value,CopyFunction copy_key_
     }
     pair->copyKey = copy_key_function;
     pair->copyValue = copy_value_function;
-    pair->Key = key;
-    pair->Value = value;
+    pair->Key = pair->copyKey(key);//copy?
+    pair->Value = pair->copyValue(value);//copy?
     pair->freeKey = free_key_function;
     pair->freeVal = free_value_function;
     pair->printKey = print_key_function;
@@ -45,9 +45,9 @@ KeyValuePair createKeyValuePair(Element key,Element value,CopyFunction copy_key_
 
 status destroyKeyValuePair(KeyValuePair pair) {
     if (pair == NULL) {
-        return failure;
+        return argumentFailure;
     }
-    //pair->freeKey(pair->Key);
+    pair->freeKey(pair->Key);
     pair->freeVal(pair->Value);
     free(pair);
     return success;

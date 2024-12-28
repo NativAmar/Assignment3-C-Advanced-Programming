@@ -4,7 +4,7 @@
 
 typedef struct Linked_List* LinkedList;
 
-LinkedList createLinkedList(CopyFunction copyFunc, FreeFunction freeFunc, EqualFunction equalFunc, PrintFunction printFunc);
+LinkedList createLinkedList(CopyFunction copyFunc, FreeFunction freeFunc, EqualFunction equalElemFunc, EqualFunction equalKeyFunc, PrintFunction printFunc);
 
 status destroyList(LinkedList list);
 
@@ -13,7 +13,7 @@ status appendNode(LinkedList list, Element element);
 status deleteNode(LinkedList list, Element element);
 
 //print the whole list by the insertion order --> first - last
-void displayList(LinkedList list);
+status displayList(LinkedList list);
 
 //return the value stored in the node at this index or NULL if the index is illegal. *the nodes will be numbered from 1 to up
 Element getDataByIndex(LinkedList list, int index);

@@ -14,8 +14,8 @@ status remove_planet_name_from_names_array(char *name);
 status add_planet_name_to_names_array(char *name);
 
 
-Jerry* create_jerry(char *id, int happiness_level,Origin *origin) {
-    if (origin == NULL) {
+Jerry* create_jerry(char *id, int happiness_level,Planet *planet, char* dimension) {
+    if (id == NULL || happiness_level < 0 || happiness_level > 100 || planet == NULL || dimension == NULL) {
         return NULL;
     }
     Jerry *jp = (Jerry*)malloc(sizeof(Jerry));
@@ -23,15 +23,19 @@ Jerry* create_jerry(char *id, int happiness_level,Origin *origin) {
     if (jp == NULL) {
         return NULL;
     }
-    jp->origin = origin;
+    jp->origin = create_origin(planet, dimension);
+    if (jp->origin == NULL) {
+        return NULL;
+    }
     jp->happiness_level = happiness_level;
     jp->characteristics_count=0;
     jp->characteristics = NULL;
 
     size_t id_length = strlen(id) +1;
-    jp->id = (char*)malloc(id_length * sizeof(char) +1);
+    jp->id = (char*)malloc(id_length * sizeof(char));
     if (jp->id == NULL) {
         free(jp);
+        destroy_origin(jp->origin);
         return NULL;
     }
     strcpy(jp->id, id);
@@ -57,9 +61,13 @@ status destroy_jerry(Jerry *jp) {
         free(jp->characteristics);
         jp->characteristics = NULL;
     }
-    //free the origin object
+    if (jp->origin != NULL) {
+        //free the origin object
     destroy_origin(jp->origin);
-    free(jp);
+    }
+    if (jp != NULL) {
+        free(jp);
+    }
     jp = NULL;
     return success;
 }
@@ -218,7 +226,9 @@ status destroy_planet(Planet *pp) {
         free(pp->name);
         pp->name = NULL;
     }
-    free(pp);
+    if (pp!=NULL) {
+        free(pp);
+    }
     return success;
 }
 
@@ -257,7 +267,9 @@ status destroy_origin(Origin *op) {
         free(op->name);
         op->name = NULL;
     }
-    free(op);
+    if (op != NULL) {
+        free(op);
+    }
     return success;
 }
 
@@ -290,14 +302,19 @@ status destroy_physical_characteristics(PhysicalCharacteristics *pcp) {
         free(pcp->name);
         pcp->name = NULL;
     }
-    free(pcp);
-    pcp=NULL;
+    if (pcp != NULL) {
+        free(pcp);
+        pcp=NULL;
+    }
     return success;
 }
 
 
 //check if the characteristic name exist in the Jerry characteristics array
 bool PhysicalCharacteristicExist(Jerry *jerry, char *characteristicsName){
+    if (jerry == NULL || characteristicsName == NULL) {
+        return false;
+    }
     for (int i = 0; i < jerry->characteristics_count; i++) {
         if (strcmp(jerry->characteristics[i]->name, characteristicsName) == 0) {
             return true;
@@ -313,7 +330,7 @@ status add_physical_characteristic(Jerry *jerry, PhysicalCharacteristics *charac
     if(jerry->characteristics == NULL) {
         jerry->characteristics = (PhysicalCharacteristics**)malloc(sizeof(PhysicalCharacteristics*));
         if (jerry->characteristics == NULL) {
-            return failure;
+            return memoryFailure;
         }
         jerry->characteristics[0] = characteristic;
         jerry->characteristics_count++;
@@ -322,7 +339,7 @@ status add_physical_characteristic(Jerry *jerry, PhysicalCharacteristics *charac
     else {
         PhysicalCharacteristics **temp = (PhysicalCharacteristics**)realloc(jerry->characteristics,sizeof(PhysicalCharacteristics*) * (jerry->characteristics_count + 1)); //should check about this adding
         if (temp == NULL) {
-            return failure;
+            return memoryFailure;
         }
         jerry->characteristics = temp;
         jerry->characteristics[jerry->characteristics_count] = characteristic;
@@ -452,11 +469,36 @@ void print_plant(Planet *planet){
 
 
 Element copy_jerry_key(Jerry *jerry) {
-    return jerry->id;
+    if (!jerry || !jerry->id) {
+        return NULL;
+    }
+
+    // Allocate memory for a new copy of the `id` string
+    char *id_copy = malloc(strlen(jerry->id) + 1); // +1 for null terminator
+    if (!id_copy) {
+        // Handle allocation failure
+        return NULL;
+    }
+
+    strcpy(id_copy, jerry->id); // Copy the string safely
+    return id_copy; // Return the new copy
 }
 
 
 Element copy_jerry_value(Jerry *jerry) {
     return jerry;
+}
+
+
+bool is_equal_jerry(Element jerry, Element jerry2) {
+    if (jerry == NULL || jerry2 == NULL) {
+        return false;
+    }
+    Jerry *j1 = (Jerry*)jerry;
+    Jerry *j2 = (Jerry*)jerry2;
+    if (strcmp(j1->id, j2->id) == 0) {
+        return true;
+    }
+    return false;
 }
 

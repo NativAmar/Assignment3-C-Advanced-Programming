@@ -15,11 +15,12 @@ struct Linked_List {
         CopyFunction copy;
         FreeFunction free;
         PrintFunction print;
-        EqualFunction equal;
+        EqualFunction equalElem;
+        EqualFunction equalKey;
 };
 
-LinkedList createLinkedList(CopyFunction copyFunc, FreeFunction freeFunc, EqualFunction equalFunc, PrintFunction printFunc ) {
-        if (copyFunc == NULL || freeFunc == NULL) {
+LinkedList createLinkedList(CopyFunction copyFunc, FreeFunction freeFunc, EqualFunction equalElemFunc,EqualFunction equalKeyFunc , PrintFunction printFunc ) {
+        if (copyFunc == NULL || freeFunc == NULL || equalElemFunc == NULL || printFunc == NULL) {
                 return NULL;
         }
         LinkedList list = (LinkedList)malloc(sizeof(struct Linked_List));
@@ -31,14 +32,15 @@ LinkedList createLinkedList(CopyFunction copyFunc, FreeFunction freeFunc, EqualF
         list->size = 0;
         list->copy = copyFunc;
         list->free = freeFunc;
-        list->equal = equalFunc;
+        list->equalElem = equalElemFunc;
+        list->equalKey = equalKeyFunc;
         list->print = printFunc;
         return list;
 };
 
 status destroyList(LinkedList list) {
         if (list == NULL) {
-                return failure;
+                return argumentFailure;
         }
         if (list->head == NULL || list->size == 0) {
                 free(list);
@@ -58,12 +60,12 @@ status destroyList(LinkedList list) {
 status appendNode(LinkedList list, Element element) {
         //input check
         if (list == NULL || element == NULL) {
-                return failure;
+                return argumentFailure;
         }
         node* newNode = (node*)malloc(sizeof(node));
         //allocation check
         if (newNode == NULL) {
-                return failure;
+                return memoryFailure;
         }
         newNode->data = list->copy(element);
         newNode->next = NULL;
@@ -86,12 +88,12 @@ status appendNode(LinkedList list, Element element) {
 
 status deleteNode(LinkedList list, Element element) {
         if (list == NULL || element == NULL) {
-                return failure;
+                return argumentFailure;
         }
         node* curr = list->head;
         node* prev = NULL;
         while (curr != NULL) {
-                if (list->equal(curr->data, element)) {
+                if (list->equalElem(curr->data, element)) {
                         if (prev == NULL) {
                                 list->head = curr->next;
                         }
@@ -110,15 +112,16 @@ status deleteNode(LinkedList list, Element element) {
 };
 
 
-void displayList(LinkedList list) {
+status displayList(LinkedList list) {
         if (list == NULL) {
-                return;
+                return argumentFailure;
         }
         node* curr = list->head;
         while (curr != NULL) {
                 list->print(curr->data);
                 curr = curr->next;
         }
+        return success;
 };
 
 
@@ -149,8 +152,8 @@ Element searchByKeyInList(LinkedList list, Element key) {
         }
         node* curr = list->head;
         while (curr != NULL) {
-                if (list->equal(curr->data, key)) {
-                        return curr->data;
+                if (list->equalKey(curr->data, key)) {
+                        return list->copy(curr->data);
                 }
                 curr = curr->next;
         }

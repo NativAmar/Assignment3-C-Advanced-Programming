@@ -46,7 +46,22 @@ Element pairCopy(Element pair) {
 }
 
 
+bool equalKeyValuePair(Element key1, Element key2) {
+    if (key1 == NULL || key2 == NULL) {
+        return false;
+    }
+    KeyValuePair kvp1 = (KeyValuePair)key1;
+    KeyValuePair kvp2 = (KeyValuePair)key2;
+    return getKey(kvp1) == getKey(kvp2);
+}
 
+bool isEqualKey_Hash(Element key1, Element key2) {
+    if (key1 == NULL || key2 == NULL) {
+        return false;
+    }
+    KeyValuePair kvp1 = (KeyValuePair)key1;
+    return isEqualKey(key1, key2);
+}
 
 
 hashTable createHashTable(CopyFunction copyKey, FreeFunction freeKey, PrintFunction printKey, CopyFunction copyValue, FreeFunction freeValue,
@@ -68,19 +83,6 @@ hashTable createHashTable(CopyFunction copyKey, FreeFunction freeKey, PrintFunct
         return NULL;
     }
 
-    //for (int i = 0; i < hashNumber; i++) {
-        //hash_Table->lists_table[i] = createLinkedList(pairCopy, (Element)destroyKeyValuePair, equalKey, printPair);
-        //allocate check
-        //if (hash_Table->lists_table[i] == NULL) {
-            //free memory which already allocated
-           // for (int j = 0; j < i; j++) {
-             //   destroyList(hash_Table->lists_table[j]);
-           // }
-         //   free(hash_Table->lists_table);
-       //     free(hash_Table);
-     //       return NULL;
-   //     }
- //   }
     hash_Table->copyKey = copyKey;
     hash_Table->copyValue = copyValue;
     hash_Table->freeKey = freeKey;
@@ -96,11 +98,11 @@ hashTable createHashTable(CopyFunction copyKey, FreeFunction freeKey, PrintFunct
 
 status destroyHashTable(hashTable hash_Table) {
     if (hash_Table == NULL) {
-        return failure;
+        return argumentFailure;
     }
     for (int i = 0; i < hash_Table->size; i++) {
         if (hash_Table->lists_table[i] != NULL) {
-            if (destroyList(hash_Table->lists_table[i]) == failure) {
+            if (destroyList(hash_Table->lists_table[i]) != success) {
                 return failure;
             }
         }
@@ -114,6 +116,9 @@ status destroyHashTable(hashTable hash_Table) {
 //LinkedList Copy function issue
 status addToHashTable(hashTable hash_Table, Element key, Element value) {
     if (hash_Table == NULL || key == NULL || value == NULL ) {
+        return argumentFailure;
+    }
+    if (lookupInHashTable(hash_Table, key) != NULL) { //key already exist
         return failure;
     }
 
@@ -121,23 +126,18 @@ status addToHashTable(hashTable hash_Table, Element key, Element value) {
     LinkedList list = hash_Table->lists_table[indexToStore];
 
     if (list == NULL) {
-        list = createLinkedList(pairCopy, (Element)destroyKeyValuePair, hash_Table->equalKey, printPair);
+        list = createLinkedList(pairCopy, (Element)destroyKeyValuePair, equalKeyValuePair, isEqualKey_Hash, printPair);
         if (list == NULL) {
-            return failure;
+            return memoryFailure;
         }
         hash_Table->lists_table[indexToStore] = list;
-    }
-    else {
-        if (searchByKeyInList(list, key) != NULL) {
-            return failure;
-        }
     }
 
     KeyValuePair pair = createKeyValuePair(key, value, hash_Table->copyKey, hash_Table->freeKey, hash_Table->copyValue,
                             hash_Table->freeValue,hash_Table->printKey, hash_Table->printValue, hash_Table->equalKey);
 
     if (pair == NULL) {
-        return failure;
+        return memoryFailure;
     }
 
     if (appendNode(list, pair) == success) {
@@ -153,23 +153,14 @@ Element lookupInHashTable(hashTable hash_Table, Element key) {
     if (hash_Table == NULL || key == NULL) {
         return NULL;
     }
-
     int indexToLookup = hash_Table->hashFunction(key) % hash_Table->size;
-    LinkedList list = hash_Table->lists_table[indexToLookup];
-
-    KeyValuePair pair = searchByKeyInList(list, key);
-
-    if (pair == NULL) {
-        return NULL;
-    }
-
-    return getValue(pair);
+    return getValue(searchByKeyInList(hash_Table->lists_table[indexToLookup], key));
 };
 
 
 status removeFromHashTable(hashTable hash_Table, Element key) {
     if (hash_Table == NULL || key == NULL) {
-        return failure;
+        return argumentFailure;
     }
 
     int indexToRemove = hash_Table->hashFunction(key) % hash_Table->size;
@@ -186,7 +177,7 @@ status removeFromHashTable(hashTable hash_Table, Element key) {
 
 status displayHashElements(hashTable hash_Table) {
     if (hash_Table == NULL) {
-        return failure;
+        return argumentFailure;
     }
     for (int i = 0; i < hash_Table->size; i++) {
         LinkedList list = hash_Table->lists_table[i];

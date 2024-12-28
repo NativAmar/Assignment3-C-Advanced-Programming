@@ -33,7 +33,7 @@ extern int planet_number;
 
 
 //Create a new Jerry object. ID should be unique for the Jerry, happiness level range 0-100 and origin pointer to the Jerry's origin.
-extern Jerry* create_jerry(char *id, int happiness_level,Origin *origin);
+extern Jerry* create_jerry(char *id, int happiness_level,Planet *planet, char *dimension);
 
 
 //Frees all memory associated with a Jerry object. Return `success` if the operation succeeded, `failure` otherwise.
@@ -89,5 +89,7 @@ extern void print_plant(Planet *planet);
 Element copy_jerry_key(Jerry *jerry);//add documentation
 
 Element copy_jerry_value(Jerry *jerry);//add documentation
+
+bool is_equal_jerry(Element jerry, Element jerry2); //add documentation
 
 #endif

@@ -7,7 +7,7 @@
 typedef struct MultiValueHashTable_s * MultiValueHashTable;//Multi hash table -> list of linked list pointers which every node at the list (in every list) consist key and another linked list for the matches values
 
 MultiValueHashTable createMultiValueHashTable(CopyFunction copyKey, CopyFunction copyValue, FreeFunction freeKey, FreeFunction freeValue, PrintFunction printKey,
-                                                PrintFunction printValue, EqualFunction equalKey, TransformIntoNumberFunction hashFunc, int hashSize);
+                                                PrintFunction printValue, EqualFunction equalKey, EqualFunction equalValue, TransformIntoNumberFunction hashFunc, int hashSize);
 
 status destroyMultiValueHashTable(MultiValueHashTable multiValueHashTable);
 

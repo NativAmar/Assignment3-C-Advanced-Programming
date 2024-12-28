@@ -6,7 +6,6 @@
 #include "MultiValueHashTable.h"
 #include "Jerry.h"
 #include "Defs.h"
-#include "KeyValuePair.h"
 
 
 #define MAX_LINE_LENGTH 300
@@ -72,17 +71,10 @@ Jerry* parse_jerry(const char *line,int number_of_planets, Planet **planets) {
         return NULL;
     }
 
-    // Create the Origin structure
-    Origin *origin = create_origin(planet, dimension);
-    if (!origin) {
-        return NULL;
-    }
-
     // Create the Jerry structure
-    Jerry *jerry = create_jerry(id, happiness_level, origin);
+    Jerry *jerry = create_jerry(id, happiness_level, planet, dimension);
     if (!jerry) {
-        destroy_planet(planet);
-        destroy_origin(origin); // Clean up if Jerry creation fails
+        //destroy_planet(planet); // Clean up if Jerry creation fails
         return NULL;
     }
 
@@ -90,7 +82,7 @@ Jerry* parse_jerry(const char *line,int number_of_planets, Planet **planets) {
 }
 
 
-status parse_config_file(const char *input_file, int number_of_planets, Planet **planets, hashTable jerries, MultiValueHashTable characteristics){
+status parse_config_file(const char *input_file, int number_of_planets, Planet **planets, hashTable jerries, MultiValueHashTable characteristics, LinkedList jerries_list){
     FILE *file = fopen(input_file, "r");
     if (!file) {
         perror("Unable to open file");
@@ -99,7 +91,7 @@ status parse_config_file(const char *input_file, int number_of_planets, Planet *
 
     char line[MAX_LINE_LENGTH];
     int planet_count = 0;
-    int jerry_count = 0;
+    int jerry_count = 0; //check if should deleted
     int section = 0; // 0 = none, 1 = Planets, 2 = Jerries
 
     Jerry *current_jerry = NULL;
@@ -168,7 +160,7 @@ status parse_config_file(const char *input_file, int number_of_planets, Planet *
                     return failure;
                 }
 
-                if (addToMultiValueHashTable(characteristics, key, current_jerry) == failure) {
+                if (addToMultiValueHashTable(characteristics, (Element)physical_char->name, (Element)current_jerry) != success) {
                     printf("A memory problem has been detected in the program\n");
                     fclose(file);
                     return failure;
@@ -182,8 +174,16 @@ status parse_config_file(const char *input_file, int number_of_planets, Planet *
                     return failure;
                 }
 
-                if (addToHashTable(jerries, current_jerry->id, current_jerry)) {
+                if (addToHashTable(jerries, (Element)current_jerry->id, (Element)current_jerry)) {
                     printf("A memory problem has been detected in the program\n");
+                    fclose(file);
+                    return failure;
+                }
+
+                if (appendNode(jerries_list, current_jerry) != success) {
+                    printf("A memory problem has been detected in the program\n");
+                    fclose(file);
+                    return failure;
                 }
             }
         }
@@ -199,7 +199,7 @@ Element copy_key(Element element) {
 }
 
 status free_jerry_key(Element element) {
-    free(element);
+    //free(element); //is part of jerry structure, shouldnt to that twice
     return success;
 }
 
@@ -263,8 +263,34 @@ int hash_jerry(Element element) {
 
 
 //characteristics multiValuesHashTable functions
-Element copy_characteristic_key(Element element) {
-    return element;
+Element deepCopy_str(Element element) {
+    if (element == NULL) {
+        return NULL;
+    }
+    char *key = (char*)element;
+    char *copy_Key = (char*) malloc(strlen(key) + 1);
+    if (copy_Key == NULL) {
+        return NULL;
+    }
+    strcpy(copy_Key, key);
+    return copy_Key;
+}
+
+status freeStr(Element element) {
+    if (element == NULL) {
+        return failure;
+    }
+    free((char*) element);
+    return success;
+}
+
+status printStr(Element element) {
+    if (element == NULL) {
+        return failure;
+    }
+    char *key = (char*)element;
+    printf("%s : \n", key);
+    return success;
 }
 
 status print_characteristic_key(Element element) {
@@ -291,14 +317,26 @@ bool equal_characteristic_key(Element element, Element other) {
     if (key == NULL || other_key == NULL) {
         return false;
     }
-    if (*key == *other_key) {
+    if (strcmp((char*) key, (char*) other_key) == 0) {
         return true;
     }
     return false;
 }
 
+Element copy_value_charTable (Element element) {
+    return element;
+}
 
-status destroy_all(hashTable hash_table, MultiValueHashTable multi_value_hash_table, Planet **planets, int numberOfPlanets) {
+status free_key_charTable(Element element) {
+    return success;
+}
+
+status free_value_charTable(Element element) {
+    return success;
+}
+
+
+status destroy_all(hashTable hash_table, MultiValueHashTable multi_value_hash_table, Planet **planets, int numberOfPlanets, LinkedList jerries_list) {
     if (hash_table == NULL || multi_value_hash_table == NULL || planets == NULL) {
         return failure;
     }
@@ -308,9 +346,211 @@ status destroy_all(hashTable hash_table, MultiValueHashTable multi_value_hash_ta
     free(planets);
     destroyHashTable(hash_table);
     destroyMultiValueHashTable(multi_value_hash_table);
+    destroyList(jerries_list);
     return success;
 }
 
+//made to avoid double free
+status fake_free_jerry(Element element) {
+    return success;
+}
+
+void printMenu() {
+    printf("Welcome Rick, what are yout Jerry's needs today ? \n");
+    printf("1 : Take this Jerry away from me \n");
+    printf("2 : I think I remember something about my Jerry \n");
+    printf("3 : Oh wait. That can't be right \n");
+    printf("4 : I guess I will take back my Jerry now \n");
+    printf("5 : I can't find my Jerry. Just give me a similar one \n");
+    printf("6 : I lost a bet. Give me your saddest Jerry \n");
+    printf("7 : Show me what you got \n");
+    printf("8 : Let the Jerries play \n");
+    printf("9 : I had enough. Close this place \n");
+}
+
+status isPlanetExist(Planet **planets, int numberOfPlanets, char *planetName) {
+    if (planets == NULL || numberOfPlanets == 0 || planetName == NULL) {
+        return failure;
+    }
+    for (int i=0; i<numberOfPlanets; i++) {
+        if (strcmp(planets[i]->name, planetName) == 0) {
+            return success;
+        }
+    }
+    return failure;
+}
+
+
+status addToDayCare(hashTable jerriesTable, Planet **planets, int numberOfPlanets, LinkedList listOfJerries) {
+    char id[MAX_LINE_LENGTH];
+    char planetName[MAX_LINE_LENGTH];
+    char dimension[MAX_LINE_LENGTH];
+    int happinessLevel;
+    Planet* planetP;//for Jerry creation
+    printf("What is your Jerry's ID ? \n");
+    scanf("%s", id);
+    if (lookupInHashTable(jerriesTable, id) != NULL) {
+        printf("Rick did you forgot ? you already left him here ! \n");
+        return failure;
+    }
+    printf("What planet is your Jerry from ? \n");
+    scanf("%s", planetName);
+    if (isPlanetExist(planets, numberOfPlanets, planetName) == failure) {
+        printf("%s is not a known planet ! \n", planetName);
+        return failure;
+    }
+    for (int i=0;i<numberOfPlanets;i++) {
+        if (strcmp(planets[i]->name, planetName) == 0) {
+            planetP = planets[i];
+        }
+    }
+    printf("What is your Jerry's dimension ? \n");
+    scanf("%s", dimension);
+    printf("How happy is your Jerry now ? \n");
+    scanf("%d", &happinessLevel);
+    Jerry *jerry = create_jerry(id, happinessLevel, planetP, dimension);
+    if (jerry == NULL) {
+        return memoryFailure;
+    }
+    if (appendNode(listOfJerries, jerry) != success) {
+        return memoryFailure;
+    }
+    if (addToHashTable(jerriesTable, (Element)jerry->id, (Element)jerry) != success) {
+        return memoryFailure;
+    }
+    print_jerry(jerry);
+    return success;
+}
+
+
+status addChar(hashTable jerriesTable, MultiValueHashTable characteristics) {
+    char id[MAX_LINE_LENGTH];
+    char character_name[MAX_LINE_LENGTH];
+    double value;
+    printf("What is your Jerry's ID ? \n");
+    scanf("%s", id);
+    Jerry *jerry = lookupInHashTable(jerriesTable, id);
+    if (jerry == NULL) {
+        printf("Rick this Jerry is not in the daycare ! \n");
+        return failure;
+    }
+    printf("What physical can you add to Jerry - %s ? \n", id);
+    scanf("%s", character_name);
+    if (PhysicalCharacteristicExist(jerry, character_name) == true) {
+        printf("The information about his %s already available to the daycare ! \n", character_name);
+        return failure;
+    }
+    printf("What is the value of his %s ? \n", character_name);
+    scanf("%lf", &value);
+    PhysicalCharacteristics* physical_char = create_physical_characteristics(character_name,value);
+    if (physical_char == NULL) {
+        return memoryFailure;
+    }
+    if (add_physical_characteristic(jerry, physical_char) != success) {
+        return memoryFailure;
+    }
+    if (addToMultiValueHashTable(characteristics, (Element)physical_char->name, (Element)jerry) != success) {
+        return memoryFailure;
+    }
+    displayMultiValueHashTable(characteristics, (Element)character_name);
+    return success;
+}
+
+
+status deleteChar(hashTable jerriesTable, MultiValueHashTable characteristics) {
+    char id[MAX_LINE_LENGTH];
+    char character_name[MAX_LINE_LENGTH];
+    printf("What is your Jerry's ID ? \n");
+    scanf("%s", id);
+    Jerry *jerry = lookupInHashTable(jerriesTable, id);
+    if (jerry == NULL) {
+        printf("Rick this Jerry is not in the daycare ! \n");
+        return failure;
+    }
+    printf("What physical characteristic do you want to remove from Jerry - %s ? \n", id);
+    scanf("%s", character_name);
+    if (PhysicalCharacteristicExist(jerry, character_name) == false) {
+        printf("The information about his %s not available to the daycare ! \n", character_name);
+        return failure;
+    }
+    if (removeFromMultiValueHashTable(characteristics, (Element)character_name, (Element)jerry) != success) {
+        return memoryFailure;
+    }
+    if (delete_physical_characteristics(jerry, character_name) != success) {
+        return memoryFailure;
+    }
+    //delete from the Jerries list?
+    print_jerry(jerry);
+    return success;
+}
+
+
+status deleteJerry(hashTable jerriesTable, MultiValueHashTable characteristics, LinkedList listOfJerries) {
+    char id[MAX_LINE_LENGTH];
+    printf("What is your Jerry's ID ? \n");
+    scanf("%s", id);
+    Jerry *jerry = lookupInHashTable(jerriesTable, id);
+    if (jerry == NULL) {
+        printf("Rick this Jerry is not in the daycare ! \n");
+        return failure;
+    }
+    //delete the Jerry pointer from each characteristic list
+    for(int i=0;i<jerry->characteristics_count;i++) {
+        if (removeFromMultiValueHashTable(characteristics, (Element)jerry->characteristics[i]->name, (Element)jerry) != success) {
+            return memoryFailure;
+        }
+    }
+    if (deleteNode(listOfJerries, (Element)jerry) != success) { //Not a real deletion
+        return memoryFailure;
+    }
+    if (removeFromHashTable(jerriesTable, (Element)jerry->id) != success) {
+        return memoryFailure;
+    }
+    printf("Rick thank you for using out daycare servie ! Your Jerry awaits ! \n");
+    return success;
+}
+
+
+void system_stats(hashTable jerriesTable, MultiValueHashTable characteristics, LinkedList listOfJerries, int numberOfPlanets, Planet** planets) {
+    char input[MAX_LINE_LENGTH];
+    printf("What information do you want to know ? \n");
+    printf("1 : All Jerries \n");
+    printf("2 : All Jerries by physical characteristics \n");
+    printf("3 : All known planets \n");
+    scanf("%s", input);
+    if (strlen(input) > 1) {
+        printf("Rick this option is not known to the daycare ! \n");
+        return;
+    }
+    int inputNumber = atoi(input);
+    switch (inputNumber) {
+        case 1:
+            if (getLengthList(listOfJerries) == 0) {
+                printf("Rick we can not help you - we currently have no Jerries in the daycare ! \n");
+            }else {
+                displayList(listOfJerries);
+            }
+            return;
+        case 2:
+            char character_input[MAX_LINE_LENGTH];
+            printf("What physical characteristics ? \n");
+            scanf("%s", character_input);
+            if (displayMultiValueHashTable(characteristics, (Element)character_input) != success) {
+                printf("Rick we can not help you - we do not know any Jerry's %s ! \n", character_input);
+            }
+            return;
+        case 3:
+            for (int i = 0; i < numberOfPlanets; i++) {
+                print_plant(planets[i]);
+            }
+            return;
+
+        default: {
+            printf("Rick this option is not known to the daycare ! \n");
+        }
+    }
+
+}
 
 int main (int argc, char *argv[]){
 
@@ -324,29 +564,79 @@ int main (int argc, char *argv[]){
         return 0;
     }
 
-    hashTable Jerries = createHashTable(copy_key, free_jerry_key, print_jerry_key, copy_jerry, free_jerry, print_jerry_value,
-                                        equal_jerry_key, hash_jerry, HASH_TABLE_SIZE);
+    LinkedList JerriesList = createLinkedList(copy_jerry, fake_free_jerry, equal_jerry_key, is_equal_jerry, print_jerry_charTable);
 
-    MultiValueHashTable characteristics = createMultiValueHashTable(copy_characteristic_key, copy_jerry, free_jerry_key, free_jerry, print_characteristic_key,
-                                                                    print_jerry_charTable, equal_characteristic_key, hash_jerry, MULTI_VALUES_HASH_TABLE_SIZE);
+    hashTable Jerries = createHashTable(deepCopy_str, freeStr, print_jerry_key, copy_jerry, free_jerry, print_jerry_value,
+                                        equal_characteristic_key, hash_jerry, HASH_TABLE_SIZE);
 
-    if(parse_config_file(input_file, number_of_planets, planets, Jerries, characteristics) == failure) {
+    MultiValueHashTable characteristics = createMultiValueHashTable(deepCopy_str, copy_jerry, freeStr, fake_free_jerry, printStr,
+                                                                    print_jerry_charTable, equal_characteristic_key,equal_jerry_key, hash_jerry, MULTI_VALUES_HASH_TABLE_SIZE);
+    if(parse_config_file(input_file, number_of_planets, planets, Jerries, characteristics, JerriesList) == failure) {
         printf("A memory problem has been detected in the program\n");
-
-        destroyHashTable(Jerries);
-        destroyMultiValueHashTable(characteristics);
-        if (planets != NULL) {
-            for (int i = 0; i < number_of_planets; i++) {
-                destroy_planet(planets[i]);
-            }
-            free(planets);
-            return 0;
-        }
+        destroy_all(Jerries, characteristics, planets, number_of_planets, JerriesList);
     }
 
-    displayHashElements(Jerries);
-    displayMultiValueHashTable(characteristics, "LimbsNumber");
-    if (destroy_all(Jerries, characteristics, planets, number_of_planets) == success) {
+    int choice;
+    do {
+        printMenu();
+
+        if (scanf("%d", &choice) != 1) {
+            printf("Rick this option is not known to the daycare ! \n");
+
+            // Clear invalid input from buffer
+            while (getchar() != '\n') {
+                choice = 0; // Reset choice to avoid processing invalid input
+                continue;
+            }
+        }
+
+        if (choice < 1 || choice > 9) {
+            continue; // Re-show the menu for invalid choices
+        }
+
+        switch (choice) {
+            case 1:
+                if (addToDayCare(Jerries, planets, number_of_planets, JerriesList) == memoryFailure) {
+                    destroy_all(Jerries, characteristics, planets, number_of_planets, JerriesList);
+                    return 1;
+                }
+            break;
+            case 2:
+                if (addChar(Jerries, characteristics) == memoryFailure) {
+                    destroy_all(Jerries, characteristics, planets, number_of_planets, JerriesList);
+                    return 1;
+                }
+            break;
+            case 3:
+                if (deleteChar(Jerries, characteristics) == memoryFailure) {
+                    destroy_all(Jerries, characteristics, planets, number_of_planets, JerriesList);
+                    return 1;
+                }
+            break;
+            case 4:
+                if (deleteJerry(Jerries, characteristics, JerriesList) == memoryFailure) {
+                    destroy_all(Jerries, characteristics, planets, number_of_planets, JerriesList);
+                }
+            break;
+            case 5:
+
+            break;
+            case 6:
+
+            break;
+            case 7:
+                system_stats(Jerries, characteristics, JerriesList, number_of_planets, planets);
+            break;
+            case 8:
+                //printf("");
+            break;
+            case 9:
+                //print_characteristic_key(Element Element);
+            break;
+        }
+    } while (choice != 9);
+
+    if (destroy_all(Jerries, characteristics, planets, number_of_planets, JerriesList) == success) {
         return 1;
     }
 
