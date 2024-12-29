@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <math.h>
+
 #include "HashTable.h"
 #include "MultiValueHashTable.h"
 #include "Jerry.h"
@@ -356,7 +358,7 @@ status fake_free_jerry(Element element) {
 }
 
 void printMenu() {
-    printf("Welcome Rick, what are yout Jerry's needs today ? \n");
+    printf("Welcome Rick, what are your Jerry's needs today ? \n");
     printf("1 : Take this Jerry away from me \n");
     printf("2 : I think I remember something about my Jerry \n");
     printf("3 : Oh wait. That can't be right \n");
@@ -510,6 +512,91 @@ status deleteJerry(hashTable jerriesTable, MultiValueHashTable characteristics, 
     return success;
 }
 
+//Helper function to the similarJerry function bellow
+double getCharacterValue(Jerry *jerry, char *character_name) {
+    if (jerry == NULL || jerry->characteristics_count == 0) {
+        return -1.0;
+    }
+    for (int i = 0; i < jerry->characteristics_count; i++) {
+        if (strcmp(jerry->characteristics[i]->name, character_name) == 0) {
+            return jerry->characteristics[i]->value;
+        }
+    }
+    return -1.0;
+}
+
+
+status customJerryDeletion(Jerry *jerry, LinkedList listOfJerries, MultiValueHashTable characteristics, hashTable jerriesTable) {
+    if (jerry == NULL || listOfJerries == NULL || characteristics == NULL || jerriesTable == NULL) {
+        return argumentFailure;
+    }
+    for(int i=0;i<jerry->characteristics_count;i++) {
+        if (removeFromMultiValueHashTable(characteristics, (Element)jerry->characteristics[i]->name, (Element)jerry) != success) {
+            return memoryFailure;
+        }
+    }
+    if (deleteNode(listOfJerries, (Element)jerry) != success) { //Not a real deletion
+        return memoryFailure;
+    }
+    if (removeFromHashTable(jerriesTable, (Element)jerry->id) != success) {
+        return memoryFailure;
+    }
+    printf("Rick thank you for using out daycare servie ! Your Jerry awaits ! \n");
+    return success;
+}
+
+
+status similarJerry(MultiValueHashTable characteristicsTable, hashTable jerriesTable, LinkedList jerriesInsertionList) {   //there is a chance I should write some function to specific deletion
+    char character_name[MAX_LINE_LENGTH];
+    double value, minDiff=101;
+    Jerry *closestJerry=NULL, *currentJerry=NULL;
+    printf("What do you remember about your Jerry ? \n");
+    scanf("%s", character_name);
+    LinkedList characteristicJerriesList = lookupInMultiValueHashTable(characteristicsTable, character_name);
+    if (characteristicJerriesList == NULL) {
+        printf("Rick we can not help you - we do not know any Jerry's %s ! \n", character_name);
+        return failure;
+    }
+    printf("What do you remember about the value of his %s ? \n", character_name);
+    scanf("%lf", &value);
+    for (int i = 1;i<=getLengthList(characteristicJerriesList);i++) {
+        currentJerry = (Jerry*)(getDataByIndex(characteristicJerriesList, i));
+        double diff = fabs((getCharacterValue(currentJerry, character_name)) - value);
+        if (diff < minDiff) {
+            minDiff = diff;
+            closestJerry = currentJerry;
+        }
+    }
+    printf("Rick this is the most suitable Jerry we found : \n");
+    print_jerry(closestJerry);
+    return customJerryDeletion(closestJerry, jerriesInsertionList, characteristicsTable, jerriesTable);
+}
+
+
+int getHappinessVal(Jerry *jerry) {
+    return jerry->happiness_level;
+}
+
+
+status saddestJerry(LinkedList listOfJerries, MultiValueHashTable characteristics, hashTable jerriesTable) {
+    if (getLengthList(listOfJerries) == 0) {
+        printf("Rick we can not help you - we currently have no Jerries in the daycare ! \n");
+        return failure;
+    }
+    Jerry *saddest_jerry=NULL;
+    int lowestHappinessValue=101;
+    for (int i=1;i<=getLengthList(listOfJerries);i++) {
+        int currentHappinessValue=getHappinessVal((Jerry*)getDataByIndex(listOfJerries, i));
+        if (currentHappinessValue <= lowestHappinessValue) {
+            saddest_jerry = (Jerry*)(getDataByIndex(listOfJerries, i));
+            lowestHappinessValue = currentHappinessValue;
+        }
+    }
+    printf("Rick this is the most suitable Jerry we found : \n");
+    print_jerry(saddest_jerry);
+    return customJerryDeletion(saddest_jerry, listOfJerries, characteristics, jerriesTable);
+}
+
 
 void system_stats(hashTable jerriesTable, MultiValueHashTable characteristics, LinkedList listOfJerries, int numberOfPlanets, Planet** planets) {
     char input[MAX_LINE_LENGTH];
@@ -549,10 +636,75 @@ void system_stats(hashTable jerriesTable, MultiValueHashTable characteristics, L
             printf("Rick this option is not known to the daycare ! \n");
         }
     }
-
 }
 
-int main (int argc, char *argv[]){
+
+void jerriesGames(LinkedList listOfJerries) {
+    if (getLengthList(listOfJerries) == 0) {
+        printf("Rick we can not help you - we currently have no Jerries in the daycare ! \n");
+        return;
+    }
+    char input[MAX_LINE_LENGTH];
+    Jerry *currJerry = NULL;
+    printf("What activity do you want the Jerries to partake in ? \n");
+    printf("1 : Interact with fake beth \n");
+    printf("2 : Play golf \n");
+    printf("3 : Adjust the picture settings on the TV \n");
+    scanf("%s", input);
+    if (strlen(input) > 1) {
+        printf("Rick this option is not known to the daycare ! \n");
+        return;
+    }
+    int inputNumber = atoi(input);
+    switch (inputNumber) {
+        case 1:
+            for (int i = 1; i <= getLengthList(listOfJerries); i++) {
+                currJerry = (Jerry*)getDataByIndex(listOfJerries, i);
+                if (currJerry->happiness_level >= 20) {
+                    currJerry->happiness_level += 15;
+                }
+                else {
+                    currJerry->happiness_level -= 5;
+                }
+            }
+        break;
+        case 2:
+            for (int i = 1; i <= getLengthList(listOfJerries); i++) {
+                currJerry = (Jerry*)getDataByIndex(listOfJerries, i);
+                if (currJerry->happiness_level >= 50) {
+                    currJerry->happiness_level += 10;
+                }
+                else {
+                    currJerry->happiness_level -= 10;
+                }
+            }
+        break;
+        case 3:
+            for (int i = 1; i <= getLengthList(listOfJerries); i++) {
+                currJerry = (Jerry*)getDataByIndex(listOfJerries, i);
+                currJerry->happiness_level += 20;
+            }
+        break;
+        default:
+            printf("Rick this option is not known to the daycare ! \n");
+        return;
+    }
+    for (int i = 1; i <= getLengthList(listOfJerries); i++) {
+        currJerry = (Jerry*)getDataByIndex(listOfJerries, i);
+        if (currJerry->happiness_level > 100) {
+            currJerry->happiness_level = 100;
+        }
+        if (currJerry->happiness_level < 0) {
+            currJerry->happiness_level = 0;
+        }
+    }
+    printf("The activity is now over ! \n");
+    displayList(listOfJerries);
+    return;
+}
+
+
+int main (int argc, char *argv[]) {
 
     int number_of_planets = atoi(argv[1]);
     char *input_file = argv[2];
@@ -616,22 +768,30 @@ int main (int argc, char *argv[]){
             case 4:
                 if (deleteJerry(Jerries, characteristics, JerriesList) == memoryFailure) {
                     destroy_all(Jerries, characteristics, planets, number_of_planets, JerriesList);
+                    return 1;
                 }
             break;
             case 5:
+                if (similarJerry(characteristics, Jerries, JerriesList) == memoryFailure) {
+                    destroy_all(Jerries, characteristics, planets, number_of_planets, JerriesList);
+                    return 1;
+                }
 
             break;
             case 6:
-
+                if (saddestJerry(JerriesList, characteristics, Jerries) == memoryFailure) {
+                    destroy_all(Jerries, characteristics, planets, number_of_planets, JerriesList);
+                    return 1;
+                }
             break;
             case 7:
                 system_stats(Jerries, characteristics, JerriesList, number_of_planets, planets);
             break;
             case 8:
-                //printf("");
+                jerriesGames(JerriesList);
             break;
             case 9:
-                //print_characteristic_key(Element Element);
+                printf("The daycare is now clean and close ! \n");
             break;
         }
     } while (choice != 9);
