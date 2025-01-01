@@ -15,6 +15,94 @@
 
 
 // Helper function: Parse Planet
+Planet* parse_planet(const char *line);
+
+//Helper function: Parse Jerry
+Jerry* parse_jerry(const char *line,int number_of_planets, Planet **planets);
+
+// Parse configuration file
+status parse_config_file(const char *input_file, int number_of_planets, Planet **planets, hashTable jerries, MultiValueHashTable characteristics, LinkedList jerries_list);
+
+// Print Jerry key
+status print_jerry_key(Element element);
+
+// Copy Jerry
+Element copy_jerry(Element element);
+
+// Free Jerry
+status free_jerry(Element element);
+
+// Print Jerry value
+status print_jerry_value(Element element);
+
+// Compare Jerry key
+bool equal_jerry_key(Element element, Element other);
+
+// Hash Jerry
+int hash_jerry(Element element);
+
+// Deep copy string
+Element deepCopy_str(Element element);
+
+// Free string
+status freeStr(Element element);
+
+// Print string
+status printStr(Element element);
+
+// Print Jerry characteristic table
+status print_jerry_charTable(Element element);
+
+// Compare characteristic key
+bool equal_characteristic_key(Element element, Element other);
+
+// Compare Jerry wrapper
+bool is_equal_jerry_wrapper(Element element1, Element element2);
+
+// Fake free Jerry
+status fake_free_jerry(Element element);
+
+// Destroy all data structures
+status destroy_all(hashTable hash_table, MultiValueHashTable multi_value_hash_table, Planet **planets, int numberOfPlanets, LinkedList jerries_list);
+
+// Print menu
+void printMenu(void);
+
+// Check if planet exists
+status isPlanetExist(Planet **planets, int numberOfPlanets, char *planetName);
+
+// Add Jerry to daycare
+status addToDayCare(hashTable jerriesTable, Planet **planets, int numberOfPlanets, LinkedList listOfJerries);
+
+// Add characteristic to Jerry
+status addChar(hashTable jerriesTable, MultiValueHashTable characteristics);
+
+// Delete characteristic from Jerry
+status deleteChar(hashTable jerriesTable, MultiValueHashTable characteristics);
+
+// Delete Jerry from daycare
+status deleteJerry(hashTable jerriesTable, MultiValueHashTable characteristics, LinkedList listOfJerries);
+
+// Get characteristic value
+double getCharacterValue(Jerry *jerry, char *character_name);
+
+// Custom Jerry deletion
+status customJerryDeletion(Jerry *jerry, LinkedList listOfJerries, MultiValueHashTable characteristics, hashTable jerriesTable);
+
+// Find and delete similar Jerry
+status similarJerry(MultiValueHashTable characteristicsTable, hashTable jerriesTable, LinkedList jerriesInsertionList);
+
+// Find and delete saddest Jerry
+status saddestJerry(LinkedList listOfJerries, MultiValueHashTable characteristics, hashTable jerriesTable);
+
+// Show system stats
+void system_stats(hashTable jerriesTable, MultiValueHashTable characteristics, LinkedList listOfJerries, int numberOfPlanets, Planet** planets);
+
+// Run Jerry activities
+void jerriesGames(LinkedList listOfJerries);
+
+
+
 Planet* parse_planet(const char *line) {
     //Input validation
     if (line == NULL || strlen(line) == 0) {
@@ -40,7 +128,6 @@ Planet* parse_planet(const char *line) {
 }
 
 
-//Helper function: Parse Jerry
 Jerry* parse_jerry(const char *line,int number_of_planets, Planet **planets) {
     //Input validation
     if (line == NULL || strlen(line) == 0) {
@@ -777,14 +864,14 @@ int main (int argc, char *argv[]) {
                 jerriesGames(JerriesList);
             break;
             case 9: // Exit the program and close the daycare
-                printf("The daycare is now clean and close ! \n");
+                if (destroy_all(Jerries, characteristics, planets, number_of_planets, JerriesList) == success) {
+                    printf("The daycare is now clean and close ! \n");
+                    return 1;
+                }
+
             break;
         }
     } while (choice != 9);
 
-    if (destroy_all(Jerries, characteristics, planets, number_of_planets, JerriesList) == success) {  // Clean up and free all allocated memory before exiting
-        return 1;
-    }
-
-    return 0; // Exit the program successfully
+    return 1; // Exit the program successfully
 };

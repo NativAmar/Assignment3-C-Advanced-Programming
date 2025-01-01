@@ -1,0 +1,36 @@
+Main Program Description :
+
+1. Configuration File Parsing:
+   - The program reads and organizes data from the provided configuration file into efficient data structures.
+
+2. Data Structures:
+   - LinkedList: Maintains the order of Jerries.
+   - HashTable: Maps Jerry IDs to their corresponding Jerry structures.
+   - MultiValueHashTable: Maps characteristics to lists of Jerries with those characteristics.
+
+3. Menu and Control Flow:
+   - Displays a menu with various operations.
+   - Handles user selections using a switch-case structure for clarity.
+
+Hash Table Size Selection:
+- Jerries Hash Table (Size: 11): Chosen for its prime number property, which reduces collisions and offers efficient memory usage.
+- Characteristics Multi-Value Hash Table (Size: 17): Also a prime number to minimize collisions, with a slightly larger size to handle multiple characteristics per Jerry.
+
+Data Structures Description:
+
+- LinkedList:
+  - Nodes: Contain a data element and a pointer to the next node.
+  - Structure: Includes a pointer to the head node, list size, and functions for copying, freeing, printing, and comparing elements and keys.
+
+- KeyValuePair:
+  - Components: Key and value elements, with functions for copying, freeing, printing, and comparing keys and values.
+
+- HashTable:
+  - Design: Stores key-value pairs using an array of linked lists for collision handling.
+  - Components: Includes lists_table (array of LinkedList structures), functions for key-value management, a hash function, and the hash table size.
+
+- MultiValueHashTable:
+  - Design: Uses a base hash table where each key maps to a linked list of values.
+    This allows efficient storage and retrieval of multiple values associated with a single key, leveraging the hash table's collision handling and lookup efficiency.
+  - Extension: Allows multiple values for a single key.
+  - Components: Base HashTable structure, functions for value management, and key functions.
