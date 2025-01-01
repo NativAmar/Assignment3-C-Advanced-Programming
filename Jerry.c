@@ -40,7 +40,7 @@ Jerry* create_jerry(char *id, int happiness_level,Planet *planet, char* dimensio
     }
     strcpy(jp->id, id);
     return jp;
-};
+}
 
 
 status destroy_jerry(Jerry *jp) {
@@ -101,7 +101,7 @@ Planet* create_planet(char *name, double x, double y, double z) {
     pp->y = y;
     pp->z = z;
     return pp;
-};
+}
 
 
 //function for managing the planets names to make sure all of them are unique
@@ -290,7 +290,7 @@ PhysicalCharacteristics* create_physical_characteristics(char *name, double valu
     strcpy(pcp->name, name);
     pcp->value = value;
     return pcp;
-};
+}
 
 
 status destroy_physical_characteristics(PhysicalCharacteristics *pcp) {
@@ -467,28 +467,9 @@ void print_plant(Planet *planet){
     printf("Planet : %s (%.2f,%.2f,%.2f) \n", planet->name, planet->x, planet->y, planet->z);
 }
 
-
-Element copy_jerry_key(Jerry *jerry) {
-    if (!jerry || !jerry->id) {
-        return NULL;
-    }
-
-    // Allocate memory for a new copy of the `id` string
-    char *id_copy = malloc(strlen(jerry->id) + 1); // +1 for null terminator
-    if (!id_copy) {
-        // Handle allocation failure
-        return NULL;
-    }
-
-    strcpy(id_copy, jerry->id); // Copy the string safely
-    return id_copy; // Return the new copy
-}
-
-
 Element copy_jerry_value(Jerry *jerry) {
     return jerry;
 }
-
 
 bool is_equal_jerry(Element jerry, Element jerry2) {
     if (jerry == NULL || jerry2 == NULL) {
@@ -500,5 +481,9 @@ bool is_equal_jerry(Element jerry, Element jerry2) {
         return true;
     }
     return false;
+}
+
+int getHappinessVal(Jerry *jerry) {
+    return jerry->happiness_level;
 }
 

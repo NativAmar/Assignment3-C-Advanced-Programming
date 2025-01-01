@@ -3,7 +3,7 @@
 #include "LinkedList.h"
 #include "Defs.h"
 
-
+//The node structure represents an individual element in the linked list
 typedef struct node_s{
         Element data;
         struct node_s *next;
@@ -19,12 +19,16 @@ struct Linked_List {
         EqualFunction equalKey;
 };
 
-LinkedList createLinkedList(CopyFunction copyFunc, FreeFunction freeFunc, EqualFunction equalElemFunc,EqualFunction equalKeyFunc , PrintFunction printFunc ) {
+
+LinkedList createLinkedList(CopyFunction copyFunc, FreeFunction freeFunc, EqualFunction equalElemFunc,EqualFunction equalKeyFunc , PrintFunction printFunc )
+{
+        //Input validation
         if (copyFunc == NULL || freeFunc == NULL || equalElemFunc == NULL || printFunc == NULL) {
                 return NULL;
         }
+        //Allocate memory for the structure
         LinkedList list = (LinkedList)malloc(sizeof(struct Linked_List));
-        //allocation check
+        //Allocation check
         if (list == NULL) {
                 return NULL;
         }
@@ -36,9 +40,11 @@ LinkedList createLinkedList(CopyFunction copyFunc, FreeFunction freeFunc, EqualF
         list->equalKey = equalKeyFunc;
         list->print = printFunc;
         return list;
-};
+}
+
 
 status destroyList(LinkedList list) {
+        //Input validation
         if (list == NULL) {
                 return argumentFailure;
         }
@@ -55,15 +61,16 @@ status destroyList(LinkedList list) {
         }
         free(list);
         return success;
-};
+}
 
 status appendNode(LinkedList list, Element element) {
-        //input check
+        //Input validation
         if (list == NULL || element == NULL) {
                 return argumentFailure;
         }
+        //Allocate memory for node structure
         node* newNode = (node*)malloc(sizeof(node));
-        //allocation check
+        //Allocation check
         if (newNode == NULL) {
                 return memoryFailure;
         }
@@ -83,10 +90,11 @@ status appendNode(LinkedList list, Element element) {
         }
         list->size++;
         return success;
-};
+}
 
 
 status deleteNode(LinkedList list, Element element) {
+        //Input validation
         if (list == NULL || element == NULL) {
                 return argumentFailure;
         }
@@ -109,10 +117,11 @@ status deleteNode(LinkedList list, Element element) {
                 curr = curr->next;
         }
         return failure;
-};
+}
 
 
 status displayList(LinkedList list) {
+        //Input validation
         if (list == NULL) {
                 return argumentFailure;
         }
@@ -122,10 +131,11 @@ status displayList(LinkedList list) {
                 curr = curr->next;
         }
         return success;
-};
+}
 
 
 Element getDataByIndex(LinkedList list, int index) {
+        //Input validation
         if (list == NULL || index < 0 || index > list->size) {
                 return NULL;
         }
@@ -134,19 +144,20 @@ Element getDataByIndex(LinkedList list, int index) {
                 curr = curr->next;
         }
         return curr->data;
-};
+}
 
 
 int getLengthList(LinkedList list) {
+        //Input validation
         if (list == NULL) {
                 return 0;
         }
         return list->size;
-};
+}
 
 
-//I should ask myself if it's better to get the equalFunc here or at the createList
 Element searchByKeyInList(LinkedList list, Element key) {
+        //Input validation
         if (list == NULL || key == NULL) {
                 return NULL;
         }
@@ -158,5 +169,5 @@ Element searchByKeyInList(LinkedList list, Element key) {
                 curr = curr->next;
         }
         return NULL;
-};
+}
 

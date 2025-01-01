@@ -16,16 +16,10 @@ struct MultiValueHashTable_s {
     EqualFunction equalValue;
 };
 
-
-Element copyElement_mvht(Element element) {
-    KeyValuePair pair = (KeyValuePair)element;
-    return pair;
-}
-
 Element copyLinkedList(Element element) {
     return element;
 }
-
+//Wrappers
 status destroyLinkedList(Element element) {
     return destroyList(element);
 }
@@ -35,34 +29,21 @@ status displayLinkedList(Element element) {
     return displayList(list);
 }
 
-status freeElement_mvht(Element element) {
-    KeyValuePair pair = (KeyValuePair)element;
-    Element key = getKey(pair);
-    LinkedList values = getValue(pair);
-    destroyList(values);
-    destroyKeyValuePair(pair);
-}
-
-status printElement_mvht(Element element) {
-    KeyValuePair pair = (KeyValuePair)element;
-    displayKey(pair);
-    displayValue(pair);
-    return success;
-}
-
-
+//The createMultiValueHashTable function initializes and allocates memory for a multi-value hash table, where each key can have multiple associated values.
+//This hash table relies on a base hash table structure to store linked lists of values for each key.
 MultiValueHashTable createMultiValueHashTable(CopyFunction copyKey, CopyFunction copyValue, FreeFunction freeKey, FreeFunction freeValue,
-                                        PrintFunction printKey, PrintFunction printValue, EqualFunction equalKey, EqualFunction equalValue, TransformIntoNumberFunction hashFunc, int hashSize) {
-
+                                        PrintFunction printKey, PrintFunction printValue, EqualFunction equalKey, EqualFunction equalValue, TransformIntoNumberFunction hashFunc, int hashSize)
+{
+    //Input validation
     if (hashSize <= 0) {
         return NULL;
     }
-
+    //Allocate memory for the structure
     MultiValueHashTable multiValueTbl = (MultiValueHashTable)malloc(sizeof(struct MultiValueHashTable_s));
     if (multiValueTbl == NULL) {
         return NULL;
     }
-
+    //
     multiValueTbl->table = createHashTable(copyKey, freeKey, printKey, copyLinkedList, destroyLinkedList, displayLinkedList, equalKey, hashFunc, hashSize);
     if (multiValueTbl->table == NULL) {
         free(multiValueTbl);
@@ -72,14 +53,14 @@ MultiValueHashTable createMultiValueHashTable(CopyFunction copyKey, CopyFunction
     multiValueTbl->copyVal = copyValue;
     multiValueTbl->freeVal = freeValue;
     multiValueTbl->printVal = printValue;
-    //multiValueTbl->printVal = displayList;?
     multiValueTbl->printKey = printKey;
     multiValueTbl->equalValue = equalValue;
     return multiValueTbl;
-};
+}
 
 
 status destroyMultiValueHashTable(MultiValueHashTable multiValueHashTable) {
+    //Input validation
     if (multiValueHashTable == NULL) {
         return argumentFailure;
     }
@@ -88,13 +69,15 @@ status destroyMultiValueHashTable(MultiValueHashTable multiValueHashTable) {
     }
     free(multiValueHashTable);
     return success;
-};
+}
 
 
 status addToMultiValueHashTable(MultiValueHashTable multiValueHashTable, Element key, Element value) {
+    //Input validation
     if (multiValueHashTable == NULL || key == NULL || value == NULL) {
         return argumentFailure;
     }
+    //search if there is a list of values already
     LinkedList valuesList = lookupInHashTable(multiValueHashTable->table, key);
 
     if (valuesList == NULL) {
@@ -112,16 +95,16 @@ status addToMultiValueHashTable(MultiValueHashTable multiValueHashTable, Element
         }
         return success;
     }
-    for (int i=0; i<getLengthList(valuesList); i++) {
-        if (multiValueHashTable->equalValue(getDataByIndex(valuesList, i), value) == true) {
-            return failure;
-        }
+    //if it's not the first value for this key , check if this value already exist
+    if (searchByKeyInList(valuesList, key) != NULL) {
+        return failure;
     }
     return appendNode(valuesList, value);
-};
+}
 
 
 LinkedList lookupInMultiValueHashTable(MultiValueHashTable multiValueHashTable, Element key) {
+    //Input validation
     if (multiValueHashTable == NULL || key == NULL) {
         return NULL;
     }
@@ -130,6 +113,7 @@ LinkedList lookupInMultiValueHashTable(MultiValueHashTable multiValueHashTable, 
 
 
 status removeFromMultiValueHashTable(MultiValueHashTable multiValueHashTable, Element key, Element value) {
+    //Input validation
     if (multiValueHashTable == NULL || key == NULL || value == NULL) {
         return argumentFailure;
     }
@@ -145,10 +129,11 @@ status removeFromMultiValueHashTable(MultiValueHashTable multiValueHashTable, El
         return removeFromHashTable(multiValueHashTable->table, key);
     }
     return success;
-};
+}
 
 
 status displayMultiValueHashTable(MultiValueHashTable multiValueHashTable, Element key) {
+    //Input validation
     if (multiValueHashTable == NULL || key == NULL) {
         return argumentFailure;
     }

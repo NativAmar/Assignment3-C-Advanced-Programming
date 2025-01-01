@@ -49,7 +49,7 @@ extern status destroy_planet(Planet *p);
 
 
 //Creates a new Origin object. Recieve planet pointer to the associated Planet (must not be NULL) and dimension name.
-extern Origin* create_origin(Planet *planet, char *name);
+extern Origin* create_origin(Planet *planet, char *name);//delete that
 
 
 //Frees all memory associated with an Origin object. Return `success` if the operation succeeded, `failure` otherwise.
@@ -79,17 +79,20 @@ extern status delete_physical_characteristics(Jerry *jerry, char *characteristic
 //Prints the details of a given Jerry.
 extern void print_jerry(Jerry *jerry);
 
-
+//custom print function for the details of a given Jerry.
 void print_jerry_without_id(Jerry *jerry);
 
 
 //Prints the details of a given Planet.
 extern void print_plant(Planet *planet);
 
-Element copy_jerry_key(Jerry *jerry);//add documentation
+// Copies the Jerry pointer and returns it as an Element type.
+Element copy_jerry_value(Jerry *jerry);
 
-Element copy_jerry_value(Jerry *jerry);//add documentation
-
+// Compares two Jerries by their 'id' and returns true if they are equal.
 bool is_equal_jerry(Element jerry, Element jerry2); //add documentation
+
+// Returns the happiness level of a Jerry.
+int getHappinessVal(Jerry *jerry);
 
 #endif
